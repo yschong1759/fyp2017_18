@@ -12,31 +12,33 @@ Operation
 
 ### On real robot
 
-| -------------           | -------------                                 |
-| start odom              | `rosrun odom odom_node`                       |
-| start hokuyo            | `roslaunch fyp2017_18 laser.launch`           |
-| start arduino           | `roslaunch fyp2017_18 arduino_launch.launch`  |
-| rviz                    | `rosrun rviz rviz`                            |
-| table_detect_revised    | `rosrun fyp2017_18 table_detect_revised`      |
-| chair_detect_revised    | `rosrun fyp2017_18 chair_detect_revised`      |
-| to_odom                 | `rosrun fyp2017_18 to_odom`                   |
-| odom_to_rpy             | `rosrun fyp2017_18 odom_to_rpy`               |
-| decision_making         | `rosrun fyp2017_18 decision_making`           |
-| drive_robot             | `rosrun fyp2017_18 drive_robot`               |
+```
+start odom              : rosrun odom odom_node
+start hokuyo            : roslaunch fyp2017_18 laser.launch
+start arduino           : roslaunch fyp2017_18 arduino_launch.launch
+rviz                    : rosrun rviz rviz
+table_detect_revised    : rosrun fyp2017_18 table_detect_revised
+chair_detect_revised    : rosrun fyp2017_18 chair_detect_revised
+to_odom                 : rosrun fyp2017_18 to_odom
+odom_to_rpy             : rosrun fyp2017_18 odom_to_rpy
+decision_making         : rosrun fyp2017_18 decision_making
+drive_robot             : rosrun fyp2017_18 drive_robot
+```
 
 ### On simulator
 
-| -------------                   | -------------                                       |
-| run Gazebo with world loaded    | `rosrun mybot_gazebo mybot_world.launch`            |
-| Connect Arduino <optional>      | `rosrun fyp2017_18 arduino_launch.launch`           |
-| rviz                            | `rosrun mybot_description mybot_description.launch` |
-| table_detect_revised            | `rosrun fyp2017_18 table_detect_revised`            |
-| chair_detect_revised            | `rosrun fyp2017_18 chair_detect_revised`            |
-| to_odom                         | `rosrun fyp2017_18 to_odom`                         |
-| odom_to_rpy                     | `rosrun fyp2017_18 odom_to_rpy`                     |
-| decision_making                 | `rosrun fyp2017_18 decision_making`                 |
-| drive_robot                     | `rosrun fyp2017_18 drive_robot`                     |
+```
+run Gazebo with world loaded        : rosrun mybot_gazebo mybot_world.launch
+Connect Arduino <optional>          : rosrun fyp2017_18 arduino_launch.launch
+rviz                                : rosrun mybot_description mybot_description.launc
+table_detect_revised                : rosrun fyp2017_18 table_detect_revised
+chair_detect_revised                : rosrun fyp2017_18 chair_detect_revised
+to_odom                             : rosrun fyp2017_18 to_odom
+odom_to_rpy                         : rosrun fyp2017_18 odom_to_rpy
+decision_making                     : rosrun fyp2017_18 decision_making
+drive_robot                         : rosrun fyp2017_18 drive_robot
 
+```
 
 Lifiting Mechanism Arduino Code
 -------------------------------
