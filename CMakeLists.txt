@@ -57,7 +57,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 # Generate messages in the 'msg' folder
 add_message_files(
     FILES
-    entry_point.msg
+    #entry_point.msg # not in use
     cluster_info.msg
     chair_info.msg
     table_info.msg
@@ -212,18 +212,6 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(chair_detect src/chair_detect.cpp)
-target_link_libraries(chair_detect ${catkin_LIBRARIES})
-add_dependencies(chair_detect fyp2017_generate_messages_cpp)
-
-add_executable(table_detect src/table_detect.cpp)
-target_link_libraries(table_detect ${catkin_LIBRARIES})
-add_dependencies(table_detect fyp2017_generate_messages_cpp)
-
-#add_executable(chair_detect_revised src/chair_detect_revised.cpp)
-#target_link_libraries(chair_detect_revised ${catkin_LIBRARIES})
-#add_dependencies(chair_detect_revised fyp2017_generate_messages_cpp)
-
 add_executable(table_detect_revised src/table_detect_revised.cpp)
 target_link_libraries(table_detect_revised ${catkin_LIBRARIES})
 add_dependencies(table_detect_revised fyp2017_generate_messages_cpp)
@@ -240,21 +228,6 @@ add_executable(to_odom src/to_odom.cpp)
 target_link_libraries(to_odom ${catkin_LIBRARIES})
 add_dependencies(to_odom fyp2017_generate_messages_cpp)
 
-add_executable(clustering src/clustering.cpp)
-target_link_libraries(clustering ${catkin_LIBRARIES})
-add_dependencies(clustering fyp2017_generate_messages_cpp)
-add_dependencies(clustering ${catkin_EXPORTED_TARGETS})
-
-add_executable(table_detection src/table_detection.cpp)
-target_link_libraries(table_detection ${catkin_LIBRARIES})
-add_dependencies(table_detection fyp2017_generate_messages_cpp)
-add_dependencies(table_detection ${catkin_EXPORTED_TARGETS})
-
-add_executable(chair_detection src/chair_detection.cpp)
-target_link_libraries(chair_detection ${catkin_LIBRARIES})
-add_dependencies(chair_detection fyp2017_generate_messages_cpp)
-add_dependencies(chair_detection ${catkin_EXPORTED_TARGETS})
-
 add_executable(decision_making src/decision_making.cpp)
 target_link_libraries(decision_making ${catkin_LIBRARIES})
 add_dependencies(decision_making fyp2017_generate_messages_cpp)
@@ -264,3 +237,21 @@ add_executable(drive_robot src/drive_robot.cpp)
 target_link_libraries(drive_robot ${catkin_LIBRARIES})
 add_dependencies(drive_robot fyp2017_generate_messages_cpp)
 add_dependencies(drive_robot ${catkin_EXPORTED_TARGETS})
+
+# availabe in /src, but not in use
+# clustering.cpp, table_detection.cpp, chair_detection.cpp
+
+# add_executable(clustering src/clustering.cpp)
+# target_link_libraries(clustering ${catkin_LIBRARIES})
+# add_dependencies(clustering fyp2017_generate_messages_cpp)
+# add_dependencies(clustering ${catkin_EXPORTED_TARGETS})
+# 
+# add_executable(table_detection src/table_detection.cpp)
+# target_link_libraries(table_detection ${catkin_LIBRARIES})
+# add_dependencies(table_detection fyp2017_generate_messages_cpp)
+# add_dependencies(table_detection ${catkin_EXPORTED_TARGETS})
+# 
+# add_executable(chair_detection src/chair_detection.cpp)
+# target_link_libraries(chair_detection ${catkin_LIBRARIES})
+# add_dependencies(chair_detection fyp2017_generate_messages_cpp)
+# add_dependencies(chair_detection ${catkin_EXPORTED_TARGETS})

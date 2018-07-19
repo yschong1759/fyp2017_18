@@ -1,4 +1,10 @@
 <launch>
+    <!-- Troubleshooting -->
+    <!-- Refer to ROS Tutorials -->
+    <!-- https://wiki.ros.org/hokuyo_node/Tutorials/UsingTheHokuyoNode -->
+
+    <!-- Check if the port name is correct -->
+
     <param name="hokuyo_node/calibrate_time"  value="false" />
     <param name="hokuyo_node/port"  value="/dev/ttyACM1" />
     <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen"/>

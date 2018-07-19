@@ -20,22 +20,49 @@ ros::Publisher chair_data_odom_pub;
 
 
 void get_cluster_data(const fyp2017_18::cluster_info::ConstPtr& clusters_msg) {
+  /*
+    Callback funtion: store data from the topic to a global variable
+
+    This function does not return.
+  */
   retrieve_cluster_data = *clusters_msg;
 }
 
 void get_table_data(const fyp2017_18::table_info::ConstPtr& tables_msg) {
+  /*
+    Callback funtion: store data from the topic to a global variable
+
+    This function does not return.
+  */
   retrieve_table_data = *tables_msg;
 }
 
 void get_chair_data(const fyp2017_18::table_info::ConstPtr& chairs_msg) {
+  /*
+    Callback funtion: store data from the topic to a global variable
+
+    This function does not return.
+  */
   retrieve_chair_data = *chairs_msg;
 }
 
 
 void transformPoint(const tf::TransformListener& listener){
-  double begin = ros::Time::now().toSec();  
+  /*
+    Get the transform relationship between odom and laser scanning rangefinder.
 
-  //we'll create a point in the base_laser frame that we'd like to transform to the odom frame
+    Convert the cluster coordinates from laser scanning rangefinder frame 
+    to odom frame. 
+
+    Publish the transformed coorfinates to respective topics. 
+
+    Refer to ROS Tutorials for details.
+    Writing a tf listener (C++)
+    http://wiki.ros.org/tf/Tutorials/Writing%20a%20tf%20listener%20%28C%2B%2B%29
+
+    This function does not return. 
+  */
+
   geometry_msgs::PointStamped cluster_data_before;
   geometry_msgs::PointStamped table_data_before;
   geometry_msgs::PointStamped chair_data_before;
@@ -43,24 +70,24 @@ void transformPoint(const tf::TransformListener& listener){
   geometry_msgs::PointStamped cluster_data_after;
   geometry_msgs::PointStamped table_data_after;
   geometry_msgs::PointStamped chair_data_after;
-  
-  cluster_data_before.header.frame_id = "laser";
 
-  //we'll just use the most recent transform available for our simple example
-  cluster_data_before.header.stamp = ros::Time();
-
-  //just an arbitrary point in space
-  cluster_data_before.point.x = 1.0;
-  cluster_data_before.point.y = 0.2;
-  cluster_data_before.point.z = 0.0;
-
-  try{
+  try {
     geometry_msgs::Point transform;
-    listener.waitForTransform("/laser", "/odom",
-                              ros::Time::now(), ros::Duration(2.0));
+
+    #if ROBOT==0
+      listener.waitForTransform("/hokuyo", "/odom",
+                                ros::Time::now(), ros::Duration(2.0));
+    #elif ROBOT==1
+      listener.waitForTransform("/laser", "/odom",
+                                ros::Time::now(), ros::Duration(2.0));
+    #endif
     
     for(int i=0; i<retrieve_cluster_data.count; i++) {
-      cluster_data_before.header.frame_id = "laser";
+      #if ROBOT==0
+        cluster_data_before.header.frame_id = "hokuyo";
+      #elif ROBOT==1
+        cluster_data_before.header.frame_id = "laser";
+      #endif
       cluster_data_before.header.stamp = ros::Time();
       cluster_data_before.point.x = retrieve_cluster_data.points[i].x;
       cluster_data_before.point.y = retrieve_cluster_data.points[i].y;
@@ -78,7 +105,11 @@ void transformPoint(const tf::TransformListener& listener){
     cluster_data_odom_pub.publish(prepare_cluster_data);
 
     for(int i=0; i<retrieve_table_data.count * 4; i++) {  // table legs
-      table_data_before.header.frame_id = "laser";
+      #if ROBOT==0
+        table_data_before.header.frame_id = "hokuyo";
+      #elif ROBOT==1
+        table_data_before.header.frame_id = "laser";
+      #endif
       table_data_before.header.stamp = ros::Time();
       table_data_before.point.x = retrieve_table_data.legs[i].x;
       table_data_before.point.y = retrieve_table_data.legs[i].y;
@@ -92,8 +123,13 @@ void transformPoint(const tf::TransformListener& listener){
 
       prepare_table_data.legs.push_back(transform);
     }
+
     for(int i=0; i<retrieve_table_data.count; i++) {  // table center
-      table_data_before.header.frame_id = "laser";
+      #if ROBOT==0
+        table_data_before.header.frame_id = "hokuyo";
+      #elif ROBOT==1
+        table_data_before.header.frame_id = "laser";
+      #endif
       table_data_before.header.stamp = ros::Time();
       table_data_before.point.x = retrieve_table_data.center[i].x;
       table_data_before.point.y = retrieve_table_data.center[i].y;
@@ -107,11 +143,16 @@ void transformPoint(const tf::TransformListener& listener){
 
       prepare_table_data.center.push_back(transform);
     }
+
     prepare_table_data.count = retrieve_table_data.count;
     table_data_odom_pub.publish(prepare_table_data);
 
-    for(int i=0; i<retrieve_chair_data.count * 4; i++) {
-      chair_data_before.header.frame_id = "laser";
+    for(int i=0; i<retrieve_chair_data.count * 4; i++) {    // chair legs
+      #if ROBOT==0
+        chair_data_before.header.frame_id = "hokuyo";
+      #elif ROBOT==1
+        chair_data_before.header.frame_id = "laser";
+      #endif
       chair_data_before.header.stamp = ros::Time();
       chair_data_before.point.x = retrieve_chair_data.legs[i].x;
       chair_data_before.point.y = retrieve_chair_data.legs[i].y;
@@ -125,8 +166,13 @@ void transformPoint(const tf::TransformListener& listener){
 
       prepare_chair_data.legs.push_back(transform);
     }
-    for(int i=0; i<retrieve_chair_data.count; i++) {
-      chair_data_before.header.frame_id = "laser";
+
+    for(int i=0; i<retrieve_chair_data.count; i++) {    // chair center
+      #if ROBOT==0
+        chair_data_before.header.frame_id = "hokuyo";
+      #elif ROBOT==1
+        chair_data_before.header.frame_id = "laser";
+      #endif
       chair_data_before.header.stamp = ros::Time();
       chair_data_before.point.x = retrieve_chair_data.center[i].x;
       chair_data_before.point.y = retrieve_chair_data.center[i].y;
@@ -143,17 +189,11 @@ void transformPoint(const tf::TransformListener& listener){
     prepare_chair_data.count = retrieve_chair_data.count;
     chair_data_odom_pub.publish(prepare_chair_data);
 
-
-    // ROS_INFO("base_laser: (%.2f, %.2f. %.2f) -----> odom: (%.2f, %.2f, %.2f) at time %.2f",
-    //     laser_point.point.x, laser_point.point.y, laser_point.point.z,
-    //     base_point.point.x, base_point.point.y, base_point.point.z, base_point.header.stamp.toSec());
   }
   catch(tf::TransformException& ex){
     ROS_ERROR("Received an exception trying to transform a point from \"laser\" to \"odom\": %s", ex.what());
   }
 
-  double end = ros::Time::now().toSec();
-  printf("transformPoint used time: %f\n", end - begin);  
 }
 
 int main(int argc, char** argv){
@@ -162,21 +202,18 @@ int main(int argc, char** argv){
 
   tf::TransformListener listener(ros::Duration(10));
 
-  //we'll transform a point once every second
-
   ros::Subscriber cluster_data_sub = n.subscribe("/cluster_data", 10, get_cluster_data);
   ros::Subscriber table_data_sub = n.subscribe("/table_data", 10, get_table_data);
   ros::Subscriber chair_data_sub = n.subscribe("/chair_data", 10, get_chair_data);
   
-
-
+  // 10 Hz
   ros::Timer timer = n.createTimer(ros::Duration(0.1), boost::bind(&transformPoint, boost::ref(listener)));
 
   cluster_data_odom_pub = n.advertise<fyp2017_18::cluster_info>("cluster_data_odom", 10);
   table_data_odom_pub = n.advertise<fyp2017_18::table_info>("table_data_odom", 10);
   chair_data_odom_pub = n.advertise<fyp2017_18::table_info>("chair_data_odom", 10);
 
-
   ros::spin();
 
+  return 0;
 }

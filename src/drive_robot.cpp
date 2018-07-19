@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
-#include <tf/tf.h>
 #include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/Twist.h>
 #include <math.h>
 
-// self define message header
-#include <fyp2017_18/entry_point.h>
+// self define message heade
 #include <fyp2017_18/drive_message.h>
 #include <fyp2017_18/drive_feedback.h>
 
@@ -34,42 +32,22 @@ struct PID_counter {    // to store variables for next iteration
   float previous_error;
 };
 
-
-geometry_msgs::Pose2D current_pose;
+// declare global variables
 fyp2017_18::drive_message drive_input;
-
-// void odomCallback(const nav_msgs::Odometry::ConstPtr& odom_msg) {
-
-//   current_pose.x = odom_msg->pose.pose.position.x;
-//   current_pose.y = odom_msg->pose.pose.position.y;
-
-//   tf::Quaternion q(
-//   odom_msg->pose.pose.orientation.x,
-//   odom_msg->pose.pose.orientation.y,
-//   odom_msg->pose.pose.orientation.z,
-//   odom_msg->pose.pose.orientation.w);
-//   tf::Matrix3x3 m(q);
-//   double roll, pitch, yaw;
-//   m.getRPY(roll, pitch, yaw);
-
-//   current_pose.theta = yaw;
-// }
-
-// float stop_x, stop_y;
-// float yaw;
-
-// void entry_point_callback(const fyp2017_18::entry_point::ConstPtr& msg) {
-//   if (msg->count == 0) {
-    
-//   } else {
-//     stop_x = msg->centerGravity[0] - 0.3;
-//     yaw = -msg->lineEqParam[0];
-//     printf("tangent of yaw angle: %f\n", yaw);
-//   }
-// }
+geometry_msgs::Pose2D current_pose;
 
 float PID_Controller(PID_param parameter, PID_counter history, float measured_value) {
-
+  /*
+    PID Input:  setpoint and measured value in the x,y or yaw direction, 
+                or, known error
+    PID Output: command velocity
+    
+    Compute the output based Kp, Ki, Kd, error
+    Store integral accumulator and last error value for next iteration
+    Cap the maximum output
+    
+    This function returns a float value. 
+  */
   float error;
   float derivative, output;
 
@@ -79,8 +57,10 @@ float PID_Controller(PID_param parameter, PID_counter history, float measured_va
   }
 
   if(parameter.type == 1) {
+    // known error is given
     error = parameter.known_error;
   } else {
+    // error is calculated from given setpoint
     error = parameter.setpoint - measured_value;
   }
   
@@ -98,10 +78,20 @@ float PID_Controller(PID_param parameter, PID_counter history, float measured_va
 }
 
 void get_pose(const geometry_msgs::Pose2D::ConstPtr& pose_msg) {
+  /*
+    Callback funtion: store data from the topic to a global variable
+
+    This function does not return.
+  */
   current_pose = *pose_msg;
 }
 
 void get_setpoint(const fyp2017_18::drive_message::ConstPtr& msg) {
+  /*
+    Callback funtion: store data from the topic to a global variable
+
+    This function does not return.
+  */
   drive_input = *msg;
 }
 
@@ -111,12 +101,11 @@ int main(int argc, char** argv) {
 
   ros::Subscriber odom_sub = n.subscribe("odom_to_rpy", 10, get_pose);
   ros::Subscriber setpoint_sub = n.subscribe("pose_setpoint", 10, get_setpoint);
-  //ros::Subscriber entry_point_sub = n.subscribe("visualize_table_entry_points", 10, entry_point_callback);
 
   cmd_vel_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
   feedback_pub = n.advertise<fyp2017_18::drive_feedback>("drive_feedback", 10);
 
-  float time_step = 100;    // time in milliseconds
+  float time_step = 100;    // time in milliseconds, 10Hz
   PID_param direction_x;
   PID_param direction_y;
   PID_param rotation_z;
@@ -124,6 +113,7 @@ int main(int argc, char** argv) {
   PID_counter direction_y_history;
   PID_counter rotation_z_history;
 
+  // set PID parameter for x, y and yaw drive direction
   direction_x_history.integral_accum = 0;
   direction_x_history.previous_error = 0;
 
@@ -195,6 +185,8 @@ int main(int argc, char** argv) {
 
     printf("error: %f\n", direction_x.setpoint - current_pose.x);
 
+    // provide feedback and stop PID iteration
+    // when PID error is within allowance
     if(drive_input.state == 1) {
       if(fabsf(rotation_z.setpoint - current_pose.theta) < 0.005) {
         cmd_vel.linear.x = 0;

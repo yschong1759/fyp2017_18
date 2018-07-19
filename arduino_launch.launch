@@ -1,3 +1,12 @@
 <launch>
+    <!-- Troubleshooting -->
+    <!-- Check if rosserial package is install -->
+    <!-- Use sudo apt-get install ros-<version>-rosserial -->
+    <!-- Learn more from ROS Tutorial -->
+    <!-- https://wiki.ros.org/rosserial_arduino/Tutorials/Arduino%20IDE%20Setup -->
+
+    <!-- Check if the arduino port name -->
+    <!-- Via Arduino IDE -->
+
     <node name="serial_node" pkg="rosserial_python"  type="serial_node.py" args="/dev/ttyACM3" output="screen"/>
 </launch>

@@ -7,6 +7,14 @@
 ros::Publisher odom_rpy_pub;
 
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+  /*
+    Callback funtion:
+    Read data from the topic
+    Convert the quarternion to Eular angle (RPY)
+    Publish the RPY coordinates
+
+    This function does not return.
+  */
   geometry_msgs::Pose2D pose2d;
   pose2d.x = msg->pose.pose.position.x;
   pose2d.y = msg->pose.pose.position.y;

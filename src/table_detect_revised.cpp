@@ -13,12 +13,14 @@
 #include <string>
 
 // self define message header
-#include <fyp2017_18/entry_point.h>
 #include <fyp2017_18/table_info.h>
 #include <fyp2017_18/cluster_info.h>
 
 #define PI 3.141595654
 #define EPS 0.000001
+
+// on actual robot is 1, on simulator is 0
+#define ROBOT 0
 
 using namespace std;
 
@@ -26,7 +28,6 @@ using namespace std;
 ros::Publisher table_cluster_pub;
 ros::Publisher table_legs_pub;
 ros::Publisher table_CG_pub;
-ros::Publisher table_entry_info_pub;
 ros::Publisher cluster_info_pub;
 ros::Publisher detected_table_data_pub;
 
@@ -175,12 +176,13 @@ void guess_points(geometry_msgs::Point point_1, geometry_msgs::Point point_2, fl
   /*
     Calculate the gradient of the previously identified side
     the line equation of adjacent sides are deduced based on the angles between them.
+    The angle is specified in global variable <angle>.
 
     The remaining possible legs is calculated based on the known length of the adjacent sides.
     An assumption is made that the object (tables or chairs) are symmetrical viewed from 
     the identified side
 
-    This function return none. It updates value to global variable "possible_points".
+    This function does not return. It updates value to global variable <possible_points>.
   */
 
   float alpha = gradient(point_1, point_2);    // gradient of identified side in radian
@@ -211,8 +213,11 @@ void guess_points(geometry_msgs::Point point_1, geometry_msgs::Point point_2, fl
 
 int find_index(geometry_msgs::Point array[], geometry_msgs::Point reference[], int array_length, int reference_length, int * store) {
   /*
-    Check elements in array if they match with any one in reference,
-    index of the matching element in reference will be passed to store
+    Check elements in <array> if they match with any one in <reference>,
+    index of the matching element in reference will be passed to <store>
+
+    This function returns 1 if all elements in <reference> are found in <array>,
+    else returns 0
   */
   float error = 0.1;  // range of error
   int k = 2;
@@ -233,6 +238,7 @@ int find_index(geometry_msgs::Point array[], geometry_msgs::Point reference[], i
 
   return 0;
 }
+
 
 int combination(int N, int K) {
   /*
@@ -267,9 +273,12 @@ int combination(int N, int K) {
   return total;    // num of combinations
 }
 
+
 void compute_distance(cluster_group target) {
   /*
     Compute the distances between points in the cluster group
+
+    This function does not return. It updates the global variable <distances>
   */
   distances[0] = sqrt(pow(target.x[0] - target.x[1], 2) + pow(target.y[0] - target.y[1], 2));
   distances[1] = sqrt(pow(target.x[0] - target.x[2], 2) + pow(target.y[0] - target.y[2], 2));
@@ -282,6 +291,8 @@ void compute_distance(cluster_group target) {
 geometry_msgs::Point compute_CG(geometry_msgs::Point target[], int index[]) {
   /*
     Compute the center of gravity of the cluster group
+
+    This function returns the <center_gravity>.
   */
   geometry_msgs::Point center_gravity;
   int count = 4;
@@ -295,18 +306,21 @@ geometry_msgs::Point compute_CG(geometry_msgs::Point target[], int index[]) {
 }
 
 void popout_elements(geometry_msgs::Point * array, int * index_to_delete, int array_length, int delete_elements) {
+  /*
+    Remove the desired elements in <array>
+
+    This function does not return. It updates the variable pointed by <array>
+  */
   geometry_msgs::Point results[array_length];
   
   int j = 0;
   int results_index = 0;
+
   for(int i=0; i<array_length; i++) {
-    //printf("array[%i]: %f   %f", i, array[i].x, array[i].y);
     if(i == index_to_delete[j]) {
-      //printf("    match\n");
       j++;
       continue;
     }
-    //printf("\n");
     results[results_index] = array[i];
     results_index++;
   }
@@ -345,10 +359,21 @@ int match_reference() {
 }
 
 void publish_table_legs_marker(table_info detected[], int count) {
+  /*
+    Configure and publish table legs' marker
+
+    This function does not return
+  */
   visualization_msgs::Marker table_legs_marker;    // marker
 
   // formatting marker
-  table_legs_marker.header.frame_id = "laser";
+
+  // frame name of laser scanner
+  #if ROBOT==0
+    table_legs_marker.header.frame_id = "hokuyo";
+  #elif ROBOT==1
+    table_legs_marker.header.frame_id = "laser";
+  #endif
   table_legs_marker.header.stamp = ros::Time::now();
 
   table_legs_marker.ns = "table legs";
@@ -380,7 +405,6 @@ void publish_table_legs_marker(table_info detected[], int count) {
     for(int j=0; j<4; j++) {
       table_legs_marker.points.push_back(detected[i].legs[j]);
     }
-    //table_legs_marker.points.push_back(detected[i].center);
   }
 
   table_legs_pub.publish(table_legs_marker);    // publish CG
@@ -388,10 +412,21 @@ void publish_table_legs_marker(table_info detected[], int count) {
 }
 
 void publish_table_CG_marker(table_info detected[], int count) {
+  /*
+    Configure and publish table CG's marker
+
+    This function does not return
+  */
   visualization_msgs::Marker table_CG_marker;    // marker
 
   // formatting marker
-  table_CG_marker.header.frame_id = "laser";
+
+  // frame name of laser scanner
+  #if ROBOT==0
+    table_CG_marker.header.frame_id = "hokuyo";
+  #elif ROBOT==1
+    table_CG_marker.header.frame_id = "laser";
+  #endif
   table_CG_marker.header.stamp = ros::Time::now();
 
   table_CG_marker.ns = "table CG";
@@ -475,12 +510,18 @@ void laser_scan_front(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
   threshold = 0.2;
   point_num_threshold = 30;
 
-  visualization_msgs::Marker cluster;    // marker
+  visualization_msgs::Marker cluster;   // marker
   geometry_msgs::Point cluster_coor;    // cluster coordinate
   fyp2017_18::cluster_info cluster_info_toPub;
 
   // formatting cluster marker
-  cluster.header.frame_id = "laser";
+
+  // frame name of laser scanner
+  #if ROBOT==0
+    cluster.header.frame_id = "hokuyo";
+  #elif ROBOT==1
+    cluster.header.frame_id = "laser";
+  #endif
   cluster.header.stamp = ros::Time::now();
 
   cluster.ns = "cluster";
@@ -553,7 +594,7 @@ void laser_scan_front(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
   cluster_info_toPub.count = cluster_num;
 
   table_cluster_pub.publish(cluster);    // publish cluster markers
-  cluster_info_pub.publish(cluster_info_toPub);
+  cluster_info_pub.publish(cluster_info_toPub);    // publish clusters' coordinate data
   printf("Total number of cluster: %i\n", cluster_num);
 
   /* 
@@ -574,7 +615,8 @@ void laser_scan_front(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
 
   float min_side = 0.66;    // shortest side is chosen
   float side_length = 1.1;    // adjacent to shortest side
-  table_info detected_table[10];    // assume it has maximum of 10
+  table_info detected_table[10];    // to store the coordinates of legs of the identified table
+                                    // assume it has maximum of 10, this is an array of struct
   fyp2017_18::table_info detected_table_info;
   
   match_num = 0;    // number of tables identified
@@ -593,7 +635,7 @@ void laser_scan_front(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
         if(find_index(possible_points, cluster_list, 4, cluster_num, p2)) {    // determining the remaining two legs
           sort_ascending(table_legs_cluster_index, 4);
           
-          for(int k=0; k<4; k++) {    // update markers
+          for(int k=0; k<4; k++) { 
             detected_table[match_num].legs[k].x = cluster_list[table_legs_cluster_index[k]].x;
             detected_table[match_num].legs[k].y = cluster_list[table_legs_cluster_index[k]].y;
             detected_table_info.legs.push_back(detected_table[match_num].legs[k]);
@@ -613,76 +655,19 @@ void laser_scan_front(const sensor_msgs::LaserScan::ConstPtr& laser_msg) {
   }
 
   printf("%i table(s) found!\n", match_num);
-  publish_table_legs_marker(detected_table, match_num);
-  publish_table_CG_marker(detected_table, match_num);
+  publish_table_legs_marker(detected_table, match_num);    // publish table legs marker
+  publish_table_CG_marker(detected_table, match_num);      // publish table CG marker
 
   detected_table_info.count = match_num;
-  detected_table_data_pub.publish(detected_table_info);    // publish to table data
+  detected_table_data_pub.publish(detected_table_info);    // publish to tables' coordinate data
 
-
-  /*
-    Publish the information on the entry points for every identified object
-    It includes gradients and center of gravity
-
-    In other words, it tells robot to approach the object from
-    the correct sides.
+  /* 
+    The commented code below is previous detection method.
+    Get all possible combination of 4 points from identified clusters
+    Compute and compare the distances between the points
   */
 
-  fyp2017_18::entry_point table_entry_points;
-
-  for(int i = 0; i<match_num; i++) {
-    for(int j = 0; j < 3; j++) {
-      for(int k = j+1; k<4; k++) {
-        distance = sqrt(pow(detected_table[i].legs[k].x - detected_table[i].legs[j].x, 2) + pow(detected_table[i].legs[k].y - detected_table[i].legs[j].y, 2));    // Pythagoras' theorem
-        if(abs(distance - side_length) < 0.1) {
-          float gradient = 1 / ((detected_table[i].legs[k].y - detected_table[i].legs[j].y) / (detected_table[i].legs[k].x - detected_table[i].legs[j].x));
-          if(gradient >= 1000 || gradient <= -1000) {
-            gradient = PI / 2;    // radian
-          } else {
-            gradient = atan(gradient);    // radian
-          }
-          //gradient = atan(gradient);
-          table_entry_points.lineEqParam.push_back(gradient);
-          table_entry_points.lineEqParam.push_back(detected_table[i].legs[k].y - detected_table[i].legs[k].x * gradient);
-        }
-      }
-    }
-    table_entry_points.centerGravity.push_back(detected_table[i].center.x);
-    table_entry_points.centerGravity.push_back(detected_table[i].center.y);
-    table_entry_points.count += 1;
-  }
-
-  table_entry_info_pub.publish(table_entry_points);
-
-  // tf::TransformListener listener_global(ros::Duration(10));
-
-  // geometry_msgs::PointStamped chair_legs_stamped[match_num * 4];
-  // geometry_msgs::PointStamped chair_legs_in_odom[match_num * 4];
-
-  // for(int i=0; i<match_num; i++) {
-  //   for(int j=0; j<4; j++) {
-  //     chair_legs_stamped[4 * i + j].header.frame_id = "laser";
-  //     chair_legs_stamped[4 * i + j].header.stamp = ros::Time();
-
-  //     chair_legs_stamped[4 * i + j].point.x = detected_table[i].legs[j].x;
-  //     chair_legs_stamped[4 * i + j].point.y = detected_table[i].legs[j].y;
-  //     chair_legs_stamped[4 * i + j].point.z = detected_table[i].legs[j].z;
-  //   }
-  // }
-
-  // try {
-  //   for(int i=0; i<match_num*4; i++) {
-  //     listener_global.waitForTransform("/laser", "/odom",
-  //                             ros::Time::now(), ros::Duration(0.5));
-  //     listener_global.transformPoint("odom", chair_legs_stamped[i], chair_legs_in_odom[i]);
-  //     printf("transformed coordinate: %f %f %f\n", chair_legs_in_odom[i].point.x, chair_legs_in_odom[i].point.y, chair_legs_in_odom[i].point.z);
-  //   }
-  // } catch(tf::TransformException& ex) {
-  //     ROS_ERROR("Recevied exception, %s", ex.what());
-  // }
-
-
-  /*  keep in view
+  /*
   for(int i=0; i<cluster_num; i++) {
     cluster_list[i] = cluster.points[i];    // retrive info from cluster markers
   }
@@ -725,10 +710,16 @@ int main(int argc, char** argv) {
   cluster_info_pub = n.advertise<fyp2017_18::cluster_info>("cluster_data", 10);
   table_legs_pub = n.advertise<visualization_msgs::Marker>("visualize_table_legs", 10);
   table_CG_pub = n.advertise<visualization_msgs::Marker>("visualize_table_CG", 10);
-  table_entry_info_pub = n.advertise<fyp2017_18::entry_point>("visualize_table_entry_points", 10);
   detected_table_data_pub = n.advertise<fyp2017_18::table_info>("table_data", 10);
 
-  ros::Subscriber laser_front_sub = n.subscribe("/scan", 10, laser_scan_front);
+  // To subscribe the data from Hokuyo Laser Scanning Rangefinder
+
+  // frame name of laser scanner
+  #if ROBOT==0
+    ros::Subscriber laser_front_sub = n.subscribe("/mybot/laser/scan", 10, laser_scan_front);
+  #elif ROBOT==1
+    ros::Subscriber laser_front_sub = n.subscribe("/scan", 10, laser_scan_front);
+  #endif
 
   ros::spin();
 
