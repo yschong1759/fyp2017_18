@@ -10,8 +10,9 @@ This README hopes to give a great head start to the next person or team, to fami
 Operation
 ---------
 
-###On real robot
+### On real robot
 
+| -------------           | -------------                                 |
 | start odom              | `rosrun odom odom_node`                       |
 | start hokuyo            | `roslaunch fyp2017_18 laser.launch`           |
 | start arduino           | `roslaunch fyp2017_18 arduino_launch.launch`  |
@@ -23,8 +24,9 @@ Operation
 | decision_making         | `rosrun fyp2017_18 decision_making`           |
 | drive_robot             | `rosrun fyp2017_18 drive_robot`               |
 
-###On simulator
+### On simulator
 
+| -------------                   | -------------                                       |
 | run Gazebo with world loaded    | `rosrun mybot_gazebo mybot_world.launch`            |
 | Connect Arduino <optional>      | `rosrun fyp2017_18 arduino_launch.launch`           |
 | rviz                            | `rosrun mybot_description mybot_description.launch` |
@@ -56,21 +58,21 @@ Note
         
         In the current workflow, `table_detect_revised` and `chair_detect_revised` is performing clustering to process the data from scanning laser rangefinders, and subseqeuntly execute the algorithm searching table and chair respectively. 
 
-        `
-        clustering -------- table detection algorithm
+        ```
+            clustering -------- table detection algorithm
                         
-        clustering -------- chair detection algorithm    
-        `   
+            clustering -------- chair detection algorithm    
+        ```
 
         Since the clustering process is common in the searching a table or chair, it was proposed to optimize the process. The cluster data from clustering process is passed to the table and chair detection algorithm respectively.
 
-        `
-                        |--- table detection algorithm
-                        |
-        clustering -----|    
-                        |
-                        |--- chair detection algorithm
-        `
+        ```
+                            |--- table detection algorithm
+                            |
+            clustering -----|    
+                            |
+                            |--- chair detection algorithm
+        ```
 
         However, the latter is not able to work properly. Further investigation is needed.
 
